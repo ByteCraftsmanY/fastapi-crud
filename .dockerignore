@@ -1,0 +1,12 @@
+# Virtual environments
+.venv
+
+# Database
+postgres_data
+
+# OS
+.DS_Store
+
+# Git
+.git/
+.gitignore
