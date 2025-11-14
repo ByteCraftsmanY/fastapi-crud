@@ -1,10 +1,11 @@
-# Python-generated files
-__pycache__/
-*.py[oc]
-build/
-dist/
-wheels/
-*.egg-info
+*.pyc
 
 # Virtual environments
 .venv
+
+# Database
+postgres_data/
+
+# OS
+.DS_Store
+Thumbs.db
