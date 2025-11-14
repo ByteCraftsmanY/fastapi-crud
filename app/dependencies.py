@@ -9,7 +9,7 @@ DATABASE_URL = os.getenv(
     "postgresql+psycopg2://admin:admin123@localhost:5432/test"
 )
 
-engine = create_engine(DATABASE_URL, echo=True)
+engine = create_engine(DATABASE_URL, echo=False)
 
 
 def get_session():

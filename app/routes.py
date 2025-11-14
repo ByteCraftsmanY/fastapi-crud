@@ -1,17 +1,18 @@
 from typing import Any, Annotated, Sequence
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, status
 from fastapi.params import Query
 from sqlmodel import select
 
-from .models import Task
-from .depandencies import SessionDep
+from .models import Task, TaskCreate, TaskUpdate
+from .dependencies import SessionDep
 
-router = APIRouter(prefix="/task")
+router = APIRouter(prefix="/task", tags=["task"])
 
 
-@router.post("/")
-async def create_task(task: Task, session: SessionDep) -> Task:
+@router.post("/", status_code=status.HTTP_201_CREATED)
+async def create_task(task_create: TaskCreate, session: SessionDep) -> Task:
+    task = Task.model_validate(task_create)
     session.add(task)
     session.commit()
     session.refresh(task)
@@ -28,8 +29,8 @@ async def get_tasks(
     return tasks
 
 
-@router.get("/{task_id}")
-async def get_task(task_id: int, session: SessionDep) -> type[Task]:
+@router.get("/{task_id}", response_model=Task, response_model_exclude_unset=True)
+async def get_task(task_id: int, session: SessionDep):
     task = session.get(Task, task_id)
     if not task:
         raise HTTPException(status_code=404, detail="task not found")
@@ -37,9 +38,20 @@ async def get_task(task_id: int, session: SessionDep) -> type[Task]:
 
 
 @router.patch("/{task_id}")
-async def update_task(task_id: int, task: Task, session: SessionDep):
-    session.merge(task)
-    return {"message": f"task {task_id} updated"}
+async def update_task(task_id: int, task_update: TaskUpdate, session: SessionDep) -> Task:
+    task = session.get(Task, task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="task not found")
+
+    # Update only the fields that were provided
+    task_data = task_update.model_dump(exclude_unset=True)
+    for key, value in task_data.items():
+        setattr(task, key, value)
+
+    session.add(task)
+    session.commit()
+    session.refresh(task)
+    return task
 
 
 @router.delete("/{task_id}")
