@@ -15,7 +15,7 @@
 Export URL in terminal before running the app:
 
 ```bash
-export DATABASE_URL=postgresql+psycopg2://admin:admin123@localhost:5432/test
+export DATABASE_URL=postgresql+psycopg2://{username}:{password}@{host}:{port}/{dbname}
 ```
 
 Then run the project:
