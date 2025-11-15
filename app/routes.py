@@ -1,6 +1,6 @@
 from typing import Any, Annotated, Literal
 
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, HTTPException, status
 from fastapi.params import Path, Query
 from sqlmodel import select
 from pydantic import BaseModel, Field
@@ -8,6 +8,14 @@ from datetime import datetime, UTC
 
 from .models import Task, TaskCreate, TaskStatus, TaskUpdate
 from .dependencies import SessionDep
+
+
+def health_check() -> dict[str, str]:
+    return {
+        "status": "healthy",
+        "message": "FastAPI CRUD Service is running"
+    }
+
 
 router = APIRouter(prefix="/task", tags=["task"])
 
@@ -71,23 +79,28 @@ async def get_task(task_id: Annotated[int, Path(title="The ID of the task to get
 
 @router.patch("/{task_id}")
 async def update_task(task_id: Annotated[int, Path(title="The ID of the task to update")], task_update: TaskUpdate, session: SessionDep) -> Task:
-    task = session.get(Task, task_id)
-    if not task:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"Task with ID {task_id} not found")
+    try:
+        task = session.get(Task, task_id)
+        if not task:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"Task with ID {task_id} not found")
+        session.flush(task)
 
-    # Update only the fields that were provided
-    task_data = task_update.model_dump(exclude_unset=True)
-    for key, value in task_data.items():
-        setattr(task, key, value)
+        # Update only the fields that were provided
+        task_data = task_update.model_dump(exclude_unset=True)
+        for key, value in task_data.items():
+            setattr(task, key, value)
 
-    # Update the updated_at timestamp
-    task.updated_at = datetime.now(UTC)
+        # Update the updated_at timestamp
+        task.updated_at = datetime.now(UTC)
 
-    session.add(task)
-    session.commit()
-    session.refresh(task)
-    return task
+        session.add(task)
+        session.commit()
+        session.refresh(task)
+        return task
+    except Exception as e:
+        session.rollback()
+        raise e
 
 
 @router.delete("/{task_id}")

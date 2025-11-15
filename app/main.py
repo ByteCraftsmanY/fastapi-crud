@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from fastapi import status
 from sqlmodel import SQLModel
 
-from app.routes import router
+from app.routes import router, health_check
 from app.dependencies import engine
 
 
@@ -38,12 +38,6 @@ async def exception_handler(request: Request, exc: Exception):
     )
 
 
-@app.get("/", tags=["health"])
-async def health_check():
-    return {
-        "status": "healthy",
-        "message": "FastAPI CRUD Service is running"
-    }
-
 # add routes
+app.add_api_route("/", endpoint=health_check, methods=["GET"])
 app.include_router(router)
