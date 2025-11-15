@@ -31,3 +31,11 @@ Run docker-compose to start the app with database inside Docker:
 ```bash
 docker-compose up -d --build
 ```
+
+## Testing
+
+Run the tests using pytest:
+
+```bash
+pytest test.py
+```
